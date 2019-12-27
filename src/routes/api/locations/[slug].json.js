@@ -1,55 +1,67 @@
-import searchables from "./_searchables";
+// routes/api/timeslots/[slug].json.js
+import { MongoClient, ObjectId } from "mongodb";
+import settings from "../../../settings";
 import _ from "lodash";
 
-/*const lookup = new Map();
-posts.forEach(post => {
-	lookup.set(post.slug, JSON.stringify(post));
-});*/
+const { mongodb_host, mongodb_port, db_name } = settings[settings.mode];
 
-const searchables_terms = Object.keys(searchables);
+const getMongoDb = async () => {
+  const connectionString = `mongodb://${mongodb_host}:${mongodb_port}`;
+  return await (async () => {
+    let client = await MongoClient.connect(connectionString, {
+      useNewUrlParser: true
+    });
 
-export function get(req, res, next) {
-  // the `slug` parameter is available because
-  // this file is called [slug].json.js
+    return [client, client.db(db_name)];
+  })().catch(err => {
+    console.error(err);
+    return false;
+  });
+};
+
+export async function get(req, res, next) {
+  const returnError = (reason = "An unknown error has occured.") => {
+    res.setHeader("Content-Type", "application/json");
+    const output = { status: "error", data: reason };
+    res.end(JSON.stringify(output));
+  };
+
+  // the `slug` parameter is available because this file
+  // is called [slug].json.js
   const { slug } = req.params;
 
-  res.writeHead(200, {
-    "Content-Type": "application/json"
+  const [client, db] = await getMongoDb();
+
+  const processedData = await (async () => {
+    try {
+      const findOptions = { building: { $regex: `.*${slug}.*` } };
+      const fieldsToReturn = { building: 1, lat: 1, lng: 1, _id: 0 };
+
+      const result = await db
+        .collection("buildings")
+        .find(findOptions)
+        .project(fieldsToReturn)
+        .limit(30)
+        .toArray();
+
+      const processed = {};
+      result.map(({ building, lat, lng }) => {
+        processed[_.startCase(_.toLower(building))] = [lat, lng];
+      });
+      return processed;
+    } finally {
+      client.close();
+    }
+  })().catch(err => {
+    console.log(err);
+    client.close();
+    return false;
   });
 
-  const slug_search = slug.toLowerCase();
-
-  const data = {};
-  searchables_terms
-    .filter(key => key.includes(slug_search))
-    .slice(0, 30)
-    .map(key => {
-      data[_.startCase(_.toLower(key))] = searchables[key];
-    });
-
-  res.end(
-    JSON.stringify({
-      status: `success`,
-      data
-    })
-  );
-
-  /*
-  if (lookup.has(slug)) {
-    res.writeHead(200, {
-      "Content-Type": "application/json"
-    });
-
-    res.end(lookup.get(slug));
+  if (processedData !== false) {
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify({ status: "success", data: processedData }));
   } else {
-    res.writeHead(404, {
-      "Content-Type": "application/json"
-    });
-
-    res.end(
-      JSON.stringify({
-        message: `Not found`
-      })
-    );
-  }*/
+    next();
+  }
 }

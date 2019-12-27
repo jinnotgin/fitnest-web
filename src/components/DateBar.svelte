@@ -99,12 +99,33 @@
   .dateTabs {
     overflow-x: hidden;
     flex: 1;
+    text-align: center;
   }
 
   .dateTabs_button {
-    flex-basis: 166px;
+    flex-basis: 70px;
     display: flex;
     justify-content: center;
+  }
+
+  .dateTabs_button i {
+    margin-right: 0;
+  }
+
+  @media only screen and (min-width: 600px) {
+    .dateTabs_button {
+      flex-basis: 140px;
+    }
+
+    .dateTabs_button i {
+      margin-right: 15px;
+    }
+  }
+
+  @media only screen and (min-width: 992px) {
+    .dateTabs_button {
+      flex-basis: 180px;
+    }
   }
 
   ul.tabs li.tab {
@@ -119,7 +140,28 @@
 
   ul.tabs li.tab a.active {
     background-color: rgba(246, 178, 181, 0.2);
+    color: #ee6e73;
+    /*background-color: rgba(0, 150, 136, 0.15);*/
   }
+
+  .tabs .tab a {
+    color: rgb(82, 94, 107);
+    cursor: pointer;
+  } /*Black color to the text*/
+
+  .tabs .tab a:hover {
+    background-color: rgba(246, 178, 181, 0.1);
+    color: rgba(238, 110, 115, 0.85);
+  } /*Text color on hover*/
+
+  /*.tabs .tab a.active {
+    background-color: #888;
+    color: dimgray;
+  }*/ /*Background and text color when a tab is active*/
+
+  /*.tabs .indicator {
+    background-color: #000;
+  }*/ /*Color of underline*/
 </style>
 
 <div class="dateTabs_container z-depth-1">
@@ -131,7 +173,6 @@
       <li key="dateTab-{date.getTime()}" class="tab">
         <a
           class={moment(date).isSame(activeDate, 'day') && 'active'}
-          href="javascript:;"
           on:click={e => {
             callbackHandler(dateSelectedHandler, { dateSelected: date });
             showNextDateTabIfNecessary(e.target.parentElement, date);
@@ -151,7 +192,8 @@
   <div class="dateTabs_button">
     <a class="waves-effect waves-light btn dateSelector" href="javascript:;">
       <i class="material-icons left">date_range</i>
-      Select Date
+      <span class="hide-on-small-only">Select</span>
+      <span class="hide-on-med-and-down">Date</span>
     </a>
   </div>
 </div>

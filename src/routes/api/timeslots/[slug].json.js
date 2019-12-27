@@ -32,6 +32,7 @@ const getLatestScrapetime = async () => {
 
   return (async () => {
     try {
+      /*
       const result = await db
         .collection("timeslots")
         .find()
@@ -40,6 +41,29 @@ const getLatestScrapetime = async () => {
         .toArray();
 
       return _.get(result, "[0].retrieved_dateTime", false);
+      */
+
+      const result = await db
+        .collection("scrapeHistory")
+        .aggregate([
+          { $sort: { scrapeStart: -1 } },
+          {
+            $group: {
+              _id: "$source",
+              latestScrapeDate: { $first: "$scrapeStart" }
+            }
+          }
+        ])
+        .toArray();
+
+      const constraints_per_source = result.map(({ _id, latestScrapeDate }) => {
+        return {
+          "facility.source": _id,
+          retrieved_dateTime: latestScrapeDate
+        };
+      });
+
+      return constraints_per_source;
     } finally {
       client.close();
     }
@@ -99,7 +123,7 @@ export async function get(req, res, next) {
 
   if ((!sport, !date)) returnError("Not enough parameters were provided.");
 
-  const latest_retrieved_dateTime = await getLatestScrapetime();
+  const per_source_latest_retrieved_dateTime = await getLatestScrapetime();
   //console.log(latest_retrieved_dateTime);
 
   const [client, db] = await getMongoDb();
@@ -109,7 +133,8 @@ export async function get(req, res, next) {
       const timeslot_options = {
         sport,
         date,
-        retrieved_dateTime: latest_retrieved_dateTime
+        //retrieved_dateTime: latest_retrieved_dateTime
+        $or: per_source_latest_retrieved_dateTime
       };
 
       if (lat && lng) {
@@ -189,7 +214,7 @@ export async function get(req, res, next) {
       return {
         facilitySportDay,
         availabilitySummary,
-        dataRefreshedDate: latest_retrieved_dateTime
+        dataRefreshedDate: per_source_latest_retrieved_dateTime
       };
     } finally {
       client.close();

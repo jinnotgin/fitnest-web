@@ -1,5 +1,6 @@
 <script>
   import Nav from "../components/Nav.svelte";
+  import Footer from "../components/Footer.svelte";
 
   const routesWithFullHeight = [
     //undefined
@@ -10,11 +11,18 @@
 </script>
 
 <style>
+  .app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+
   main {
     position: relative;
     background-color: white;
     margin: 2px auto auto auto; /* 2 px is to adjust for shadow from materialize nav bar */
     box-sizing: border-box;
+    flex: 1;
   }
   main.fullHeight {
     max-height: calc(100vh - 64px - 2px);
@@ -27,9 +35,13 @@
   }
 </style>
 
-<Nav {segment} />
+<div class="app">
+  <Nav {segment} />
 
-<main
-  class={routesWithFullHeight.includes(segment) ? 'fullHeight' : 'container'}>
-  <slot />
-</main>
+  <main
+    class={routesWithFullHeight.includes(segment) ? 'fullHeight' : 'container'}>
+    <slot />
+  </main>
+
+  <Footer {segment} />
+</div>

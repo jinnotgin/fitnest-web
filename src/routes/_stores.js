@@ -15,6 +15,8 @@ export const timeslots_data = writable({
   availabilitySummary: {},
   totalFacilitiesInDesiredTimePeriods: 0
 });
+export const cardsToggle = writable({});
+export const isLoading_home = writable(true);
 
 export const constants = readable(constantsData);
 export const searchPeriodStart = readable(date_today);

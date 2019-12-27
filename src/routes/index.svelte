@@ -1,9 +1,9 @@
 <script>
   import { stores } from "@sapper/app";
   import moment from "moment";
-  import Map from "../components/Map.svelte";
   import DateBar from "../components/DateBar.svelte";
   import Spinner from "../components/Spinner.svelte";
+  import CardsContainer from "../components/CardsContainer.svelte";
   import {
     fetch_timeslots,
     fetch_searchLocations,
@@ -25,7 +25,9 @@
     locationToSearch,
     searchPeriodStart,
     searchPeriodEnd,
-    timeslots_data
+    timeslots_data,
+    cardsToggle,
+    isLoading_home
   } from "./_stores.js";
 
   const chipColors = {
@@ -34,20 +36,17 @@
     evening: "deep-purple lighten-4"
   };
 
-  let cardsToggle = {};
-
-  let isLoading = true;
   let setLoading_timeout;
   const setLoading = targetState => {
     clearTimeout(setLoading_timeout);
 
-    if (isLoading !== targetState) {
+    if ($isLoading_home !== targetState) {
       setLoading_timeout = setTimeout(
         () => {
-          isLoading = targetState;
+          isLoading_home.update(item => targetState);
         },
         500,
-        isLoading,
+        $isLoading_home,
         targetState
       );
     }
@@ -75,14 +74,22 @@
     debounced_update_location_searchTerm.cancel();
     debounced_update_location_searchTerm(event.target.value);
   };
+  const clearSearchInput = () => {
+    const targetElem = document.querySelector(".searchLocation_input");
+    targetElem.value = "";
+  };
 
   $: {
     fetch_searchLocations({
       value: location_searchTerm
     }).then(responseValue => {
+      // get the data
       const data = _.get(responseValue, "data", {});
+
+      // this statement will update "location_responseData", needed by other fucntiosn
       location_responseData = data;
 
+      // prepare autocomplete search
       const processedData = {};
       Object.keys(data).map(value => (processedData[value] = null));
       if (typeof M !== "undefined") {
@@ -100,16 +107,20 @@
 
   // refetech data if necessary
   $: {
-    console.log({ $dateToSearch, $sportToSearch, $locationToSearch });
-    console.log({ ...$locationToSearch });
+    //console.log({ $dateToSearch, $sportToSearch, $locationToSearch });
+    //console.log({ ...$locationToSearch });
     $dateToSearch && $sportToSearch && $locationToSearch && updatePage();
   }
 
   // recalculate availalbility if ncesssary
   $: {
-    console.log({ $timePeriodToSearch });
+    //console.log({ $timePeriodToSearch });
     $timePeriodToSearch && updatePage(true);
   }
+
+  /*$: {
+    console.log({ $cardsToggle });
+  }*/
 
   // page update script
   const updatePage = (indexOnly = false) => {
@@ -124,15 +135,33 @@
         ...timeslotData,
         totalFacilitiesInDesiredTimePeriods: 0
       };
+      const toUpdate_cardsToggle = {};
+
       Object.values(_.get(output, "availabilitySummary", {})).map(
         availiabilityData => {
-          const { _id } = availiabilityData;
+          const { _id, date } = availiabilityData;
+          const { sport_source_id, facility } = output.facilitySportDay[_id];
 
-          const { facility } = output.facilitySportDay[_id];
+          // cardsToggle
+          // if new facilities are found, add them to cardsToggle
+          //console.log(facility);
+          if ($cardsToggle[facility._id] == undefined)
+            toUpdate_cardsToggle[facility._id] = false;
 
-          if (cardsToggle[facility._id] == undefined)
-            cardsToggle[facility._id] = false;
+          // facilitySportDay
+          // add a url to facilitySportDay
+          const { source, source_id } = facility;
+          let url = "#";
+          if (source == "ActiveSG") {
+            url = `https://members.myactivesg.com/facilities/view/activity/${sport_source_id}/venue/${source_id}?time_from=${moment(
+              date
+            ).unix()}`;
+          } else if (source == "onePA") {
+            url = `https://www.onepa.sg/facilities/${sport_source_id}`;
+          }
+          output.facilitySportDay[_id].url = url;
 
+          // availabilitySummary
           // compute total for facilities in general
           output.availabilitySummary[_id].totalInDesiredTimePeriods = 0;
           $timePeriodToSearch.map(period => {
@@ -140,12 +169,14 @@
               availiabilityData[period];
           });
 
+          // availabilitySummary
           // update totalFacilitiesInDesiredTimePeriods
           output.totalFacilitiesInDesiredTimePeriods +=
             output.availabilitySummary[_id].totalInDesiredTimePeriods > 0
               ? 1
               : 0;
 
+          // availabilitySummary
           // compute total for each court in a facility
           Object.entries(availiabilityData.courts).map(
             ([courtName, courtAvailabilityData]) => {
@@ -162,6 +193,30 @@
         }
       );
 
+      // determine general sorting order of all items
+      // account for facilities that have been toggled on already
+      const toSort_untoggled = [];
+      const toSort_toggled = [];
+      Object.keys(output.availabilitySummary).map(facilitySportDay_id => {
+        const facility_id =
+          output.facilitySportDay[facilitySportDay_id].facility._id;
+
+        if ($cardsToggle[facility_id]) toSort_toggled.push(facilitySportDay_id);
+        else toSort_untoggled.push(facilitySportDay_id);
+      });
+      const sortingFunction = (a, b) =>
+        output.availabilitySummary[b].totalInDesiredTimePeriods -
+        output.availabilitySummary[a].totalInDesiredTimePeriods;
+
+      output.sortingOrder = [
+        ...toSort_toggled.sort(sortingFunction),
+        ...toSort_untoggled.sort(sortingFunction)
+      ];
+
+      cardsToggle.update(item => {
+        return { ...item, ...toUpdate_cardsToggle };
+      });
+
       return output;
     };
     let error = {
@@ -172,7 +227,7 @@
     if (indexOnly) {
       const reindexed_timeslots_data = index_timeslots_data($timeslots_data);
       timeslots_data.update(() => reindexed_timeslots_data);
-      console.log(reindexed_timeslots_data);
+      //console.log(reindexed_timeslots_data);
     } else {
       setLoading(true);
 
@@ -197,11 +252,10 @@
               return indexed_timeslots_data;
             });
             setLoading(false);
-            console.log(indexed_timeslots_data);
           }
         })
         .catch(error => {
-          console.log(error.message);
+          console.error(error.message);
 
           error_timeslotData.errorMessage = error.message;
 
@@ -214,7 +268,7 @@
   // determine dates_allowed
   $: allDaysInPeriod = [];
   $: startMoment = moment($searchPeriodStart);
-  $: endMoment = moment($searchPeriodEnd).add(14, "days");
+  $: endMoment = moment($searchPeriodEnd);
   $: {
     // clear out daysPeriod
     allDaysInPeriod = [];
@@ -234,7 +288,9 @@
 
   // onmount stuff for materialize
   onMount(() => {
-    M.AutoInit();
+    const select_elems = document.querySelectorAll("select");
+    M.FormSelect.init(select_elems);
+
     M.Autocomplete.init(document.querySelector(".searchLocation_input"), {
       onAutocomplete: key => {
         console.log(key);
@@ -248,6 +304,8 @@
       }
     });
   });
+
+  console.log("Version:", $constants.version);
 </script>
 
 <style>
@@ -259,100 +317,44 @@
     margin-bottom: 6px;
   }
 
-  .card-content {
-    padding: 12px 16px;
-  }
-
-  .cardsContainer {
-    display: grid;
-    grid-template-columns: 1fr;
-    grid-column-gap: 10px;
-    grid-row-gap: 15px;
-  }
-
-  @media only screen and (min-width: 800px) {
-    .cardsContainer {
-      grid-template-columns: 1fr 1fr;
-    }
-  }
-
-  @media only screen and (min-width: 1620px) {
-    .cardsContainer {
-      grid-template-columns: 1fr 1fr 1fr;
-    }
-  }
-
-  .cardsContainer .card {
-    height: fit-content;
-  }
-
-  .cardsContainer .card .card-title {
-    display: flex;
-  }
-  .card-image {
-    height: 125px;
-    background: #d5e0e29e;
-  }
-  .card-image span {
-    color: black;
-  }
-  .cardsContainer .card .card-title .text {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-  }
-
-  .cardsContainer .card .new.badge {
-    float: unset;
-    padding: 0.3em 0.6em;
-    font-size: 1rem;
-    margin: 12px;
-  }
-
-  li.collection-item .row {
-    margin-bottom: 0px;
-  }
-
-  li.collection-item .row.facilityTitle {
-    margin-bottom: 12px;
-  }
-
-  .card-content ul.collection {
-    border: 0;
-    margin: 0;
-    margin-top: 12px;
-  }
-
-  .chip {
-    width: 6.25em;
-    font-size: 0.9rem;
-    text-align: center;
-  }
-
-  .chip img {
-    background-color: rgba(255, 255, 255, 0.5);
-  }
-
-  .card-action {
-    display: flex;
-    justify-content: center;
-  }
-
   .noCardsMessage {
     margin-top: 24px;
     text-align: center;
   }
+
+  .noCardsSubtitle {
+    text-align: center;
+    font-style: italic;
+  }
+
+  .searchLocation_overallContainer {
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+  }
+
+  .searchLocation_inputGroupContainer {
+    flex: 1;
+  }
+  .searchLocation_cancelContainer i {
+    margin-top: 18px;
+    margin-left: 6px;
+    color: lightgrey;
+    cursor: pointer;
+    user-select: none;
+  }
+  .searchLocation_cancelContainer.active i {
+    color: #525e6b;
+  }
 </style>
 
 <svelte:head>
-  <title>{$constants.name} {$constants.version}</title>
+  <title>{$constants.name}</title>
 </svelte:head>
 
 <!-- search bar could be refactored as a component in the future-->
 <div class="row searchBar">
-  <div class="input-field col s3">
+  <div class="input-field col s12 m4 l2">
     <select bind:value={$sportToSearch}>
       <!--<option value="" disabled selected>Choose your option</option>-->
       <option value="badminton">Badminton</option>
@@ -362,7 +364,7 @@
     <label>Sport</label>
   </div>
 
-  <div class="input-field col s3">
+  <div class="input-field col s12 m8 l4">
     <select class="select_timeOfDay" multiple bind:value={$timePeriodToSearch}>
       {#each ['morning', 'afternoon', 'evening'] as timeOfDay, i}
         <option value={timeOfDay}>{toTitleCase(timeOfDay)}</option>
@@ -371,12 +373,24 @@
     <label>Time</label>
   </div>
 
-  <div class="input-field col s6">
-    <input
-      type="text"
-      class="autocomplete searchLocation_input"
-      on:input={handleSearchInput} />
-    <label for="autocomplete-input">Location</label>
+  <div class="col s12 m12 l6 searchLocation_overallContainer">
+    <div class="input-field searchLocation_inputGroupContainer">
+      <input
+        type="text"
+        class="autocomplete searchLocation_input"
+        on:input={handleSearchInput} />
+      <label for="autocomplete-input">🔍 Search Location (optional)</label>
+    </div>
+    <div
+      class="searchLocation_cancelContainer {location_searchTerm != '' ? 'active' : ''}"
+      on:click={() => {
+        if (location_searchTerm !== '') {
+          update_location_searchTerm('');
+          clearSearchInput();
+        }
+      }}>
+      <i class="material-icons">cancel</i>
+    </div>
   </div>
 </div>
 
@@ -393,77 +407,23 @@
 
 <div class="row">
   <div class="col s12 m12 l12">
-    {#if isLoading}
+    {#if $isLoading_home}
       <div class="row">
         <Spinner />
       </div>
     {/if}
-    {#if !isLoading && $timeslots_data.totalFacilitiesInDesiredTimePeriods === 0}
+    {#if !$isLoading_home && $timeslots_data.totalFacilitiesInDesiredTimePeriods === 0}
       <div class="row">
         <h1 class="col s12 noCardsMessage">
           Bummer! There are no venues available. 😢
         </h1>
+        <h6 class="noCardsSubtitle">
+          Perhaps try another date, time or location?
+        </h6>
       </div>
     {/if}
-    <div class="cardsContainer" transit:fade>
-      {#each Object.values($timeslots_data.facilitySportDay) as { _id, courts, facility }, i}
-        {#if !isLoading && $timeslots_data.availabilitySummary[_id].totalInDesiredTimePeriods > 0}
-          <div key={_id} class="card">
-            <div class="card-image">
-              <img src="images/transparent.png" />
-              <span class="card-title">{facility.name}</span>
-              <a
-                class="btn-floating halfway-fab waves-effect waves-light red"
-                on:click={() => {
-                  cardsToggle[facility._id] = !cardsToggle[facility._id];
-                }}>
-                <i class="material-icons">
-                  {cardsToggle[facility._id] ? 'remove' : 'add'}
-                </i>
-              </a>
-            </div>
-            <div class="card-content">
-              <!--<div class="card-title">
-                <span class="text">{facility.name}</span>
-              </div>-->
-              <span class="new badge" data-badge-caption="available">
-                {$timeslots_data.availabilitySummary[_id].totalInDesiredTimePeriods}
-              </span>
-              <ul class="collection">
-                {#each Object.entries(courts) as [courtName, allSlots], j}
-                  {#if cardsToggle[facility._id] && $timeslots_data.availabilitySummary[_id].courts[courtName].totalInDesiredTimePeriods > 0}
-                    <li
-                      key={`${_id}_${courtName}`}
-                      class="collection-item"
-                      transition:fade={{ duration: 200 }}>
-                      <div class="row facilityTitle">
-                        <strong>{courtName}</strong>
-                      </div>
-                      <div class="row">
-                        {#each Object.entries(allSlots) as [slotName, { status, timePeriod }], k}
-                          {#if $timePeriodToSearch.includes(timePeriod)}
-                            {#if status >= 1}
-                              <div
-                                class="chip {chipColors[timePeriod]}"
-                                transition:fade={{ duration: 200 }}>
-                                <!--<img
-                                  src="images/{timePeriod}.png"
-                                  alt={timePeriod} />-->
-                                {slotName}
-                              </div>
-                            {/if}
-                          {/if}
-                        {/each}
-                      </div>
-                    </li>
-                  {/if}
-                {/each}
-              </ul>
-            </div>
-          </div>
-        {/if}
-      {/each}
-    </div>
+    <CardsContainer />
+    <!--
     <ul class="pagination">
       <li class="disabled">
         <a href="#!">
@@ -491,6 +451,7 @@
         </a>
       </li>
     </ul>
+		-->
   </div>
 
   <!---->
@@ -502,7 +463,6 @@
           9-columns-wide on large screens,
           8-columns-wide on medium screens,
           12-columns-wide on small screens  -->
-    <Map />
     <!--
     <h1>Great success!</h1>
 
