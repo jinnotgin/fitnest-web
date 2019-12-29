@@ -9,6 +9,7 @@ const date_today = moment()
 export const dateToSearch = writable(date_today);
 export const sportToSearch = writable("badminton");
 export const timePeriodToSearch = writable(["morning", "afternoon", "evening"]);
+export const timeRangeToSearch = writable(["2:00 PM", "6:00 PM"]);
 export const locationToSearch = writable({ lat: false, lng: false });
 export const timeslots_data = writable({
   facilitySportDay: {},

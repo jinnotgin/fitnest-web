@@ -1,4 +1,5 @@
 <script>
+  import { constants } from "../routes/_stores.js";
   export let segment;
 </script>
 
@@ -11,7 +12,7 @@
 
 <nav class="teal">
   <div class="nav-wrapper">
-    <span class="brand-logo">FitNest</span>
+    <span class="brand-logo">{$constants.name}</span>
     <ul id="nav-mobile" class="right hide-on-med-and-down">
       <li>
         <a class:selected={segment === undefined} href=".">home</a>

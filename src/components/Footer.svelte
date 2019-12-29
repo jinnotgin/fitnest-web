@@ -4,16 +4,15 @@
   // personal store
   import { timeslots_data } from "../routes/_stores.js";
 
-  $: dateRefreshMoment = _.get($timeslots_data, "dataRefreshedDate", []).reduce(
-    (acc, { retrieved_dateTime }) => {
-      if (acc == false) return moment(retrieved_dateTime);
-      else {
-        const itemMoment = moment(retrieved_dateTime);
-        return itemMoment.isBefore(acc) ? itemMoment : acc;
-      }
-    },
-    false
-  );
+  $: dateRefreshed = _.get($timeslots_data, "dataRefreshedDate", []);
+
+  $: dateRefreshMoment = dateRefreshed.reduce((acc, { retrieved_dateTime }) => {
+    if (acc == false) return moment(retrieved_dateTime);
+    else {
+      const itemMoment = moment(retrieved_dateTime);
+      return itemMoment.isBefore(acc) ? itemMoment : acc;
+    }
+  }, false);
   $: dateRefreshString = dateRefreshMoment
     ? `Last updated ${dateRefreshMoment.fromNow()}`
     : "";
@@ -40,7 +39,19 @@
           Jin - © {moment().format('YYYY')}
         </a>
       </div>
-      <div class="informationLastUpdated">{dateRefreshString}</div>
+      <div
+        class="informationLastUpdated tooltipped"
+        data-position="top"
+        data-tooltip={dateRefreshed
+          .map(
+            item =>
+              `<strong>${item['facility.source']}</strong>: ${moment(
+                item['retrieved_dateTime']
+              ).fromNow()}`
+          )
+          .join('<br>')}>
+        {dateRefreshString}
+      </div>
       <!--<a class="grey-text text-lighten-4 right" href="#!">More Links</a>-->
     </div>
   </div>

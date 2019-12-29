@@ -52,9 +52,7 @@
 
   function datePickerClose() {
     const { date } = M_dateSelector;
-    callbackHandler(dateSelectedHandler, {
-      dateSelected: date
-    });
+    console.log(date);
 
     const targetElem = document.querySelector(
       `li.tab[key="dateTab-${date.getTime()}"] a`
@@ -190,7 +188,7 @@
     chevron_right
   </i>
   <div class="dateTabs_button">
-    <a class="waves-effect waves-light btn dateSelector" href="javascript:;">
+    <a class="waves-effect waves-light btn dateSelector">
       <i class="material-icons left">date_range</i>
       <span class="hide-on-small-only">Select</span>
       <span class="hide-on-med-and-down">Date</span>

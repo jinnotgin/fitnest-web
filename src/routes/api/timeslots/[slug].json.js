@@ -81,7 +81,7 @@ const getNearestFacilitiesObjectId = async (lat, lng) => {
       const nearestFacilityOptions = {
         loc: {
           $geoWithin: {
-            $centerSphere: [[parseFloat(lng), parseFloat(lat)], kmToRadian(5)]
+            $centerSphere: [[parseFloat(lng), parseFloat(lat)], kmToRadian(4)]
           }
         }
       };
@@ -165,12 +165,72 @@ export async function get(req, res, next) {
           evening: 0,
           courts: {}
         };
-        Object.entries(courts).map(([courtName, courtTimeData]) => {
-          availability.courts[courtName] = {
-            morning: 0,
-            afternoon: 0,
-            evening: 0
-          };
+
+        Object.keys(courts)
+          .sort()
+          .map(courtName => {
+            const courtTimeData = courts[courtName];
+
+            availability.courts[courtName] = {
+              morning: 0,
+              afternoon: 0,
+              evening: 0
+            };
+
+            // sort the court's slots data
+            const courtTimeData_sortedByStartDate_array = Object.entries(
+              courtTimeData
+            ).sort(
+              ([a_slotName, a_slotData], [b_slotName, b_slotData]) =>
+                new Date(a_slotData.startTime) - new Date(b_slotData.startTime)
+            );
+
+            // delete original court from facilitySportDay (because its unsorted)
+            delete facilitySportDay[_id].courts[courtName];
+
+            // recreate teh court in facilitySportDay with empty slots data
+            facilitySportDay[_id].courts[courtName] = {};
+
+            // using the sorted slots data
+            courtTimeData_sortedByStartDate_array.map(
+              ([startTime_str, slotData]) => {
+                // add to facilitySportDay's data, in sorted order
+                facilitySportDay[_id].courts[courtName][
+                  startTime_str
+                ] = slotData;
+
+                const { startTime, status } = slotData;
+                const startMoment = moment(startTime);
+
+                const afternoonThreshold = moment(startMoment)
+                  .hours(13)
+                  .minutes(0)
+                  .seconds(0);
+                const eveningThreshold = moment(afternoonThreshold).hours(17);
+
+                const isMorning = startMoment.isBefore(afternoonThreshold);
+                const isAfternoon = startMoment.isBefore(eveningThreshold);
+                const isEvening = startMoment.isSameOrAfter(afternoonThreshold);
+
+                const isAvailable = status > 0 ? 1 : 0;
+                const incrementor = 1 * isAvailable;
+
+                let timePeriod = "";
+                if (isMorning) {
+                  timePeriod = "morning";
+                } else if (isAfternoon) {
+                  timePeriod = "afternoon";
+                } else if (isEvening) {
+                  timePeriod = "evening";
+                }
+                availability[timePeriod] += incrementor;
+                availability.courts[courtName][timePeriod] += incrementor;
+                facilitySportDay[_id].courts[courtName][
+                  startTime_str
+                ].timePeriod = timePeriod;
+              }
+            );
+            /*
           Object.entries(courtTimeData).map(
             ([startTime_str, { startTime, status }]) => {
               const startMoment = moment(startTime);
@@ -202,8 +262,8 @@ export async function get(req, res, next) {
                 startTime_str
               ].timePeriod = timePeriod;
             }
-          );
-        });
+          );*/
+          });
         availabilitySummary[_id] = {
           _id,
           ...availability

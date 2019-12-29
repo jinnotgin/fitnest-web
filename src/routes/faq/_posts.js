@@ -17,10 +17,17 @@ const posts = [
 		`
   },
   {
+    title: "Why only badminton? What about other sports?",
+    slug: "sports-selection",
+    html: `
+			<p>We are still in early beta phase of this app. Once the bugs are ironed out, more sports will be added. :)</p>
+		`
+  },
+  {
     title: "How do I contact the creators of FitNest?",
     slug: "contact",
     html: `
-			<p>For now, you can drop an email at <u><a href="mailto:jin@linjin.me">jin@linjin.me.</a></u></p>
+			<p>For now, you can drop an email to <u><a href="mailto:jin@linjin.me">jin@linjin.me.</a></u></p>
 		`
   }
   /*

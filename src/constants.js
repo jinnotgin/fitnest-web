@@ -1,5 +1,5 @@
 const constants = {
-  name: "FitNest",
+  name: "fitnest",
   version: "0.1",
   daysDataAvailable: 14
 };

@@ -34,7 +34,7 @@ export async function get(req, res, next) {
 
   const processedData = await (async () => {
     try {
-      const findOptions = { building: { $regex: `.*${slug}.*` } };
+      const findOptions = { building: { $regex: `.*${slug.toLowerCase()}.*` } };
       const fieldsToReturn = { building: 1, lat: 1, lng: 1, _id: 0 };
 
       const result = await db

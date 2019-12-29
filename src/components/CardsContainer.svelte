@@ -44,7 +44,8 @@
   $: relevant_facilities = Object.values(
     _.get($timeslots_data, "availabilitySummary", {})
   )
-    .filter(item => item.totalInDesiredTimePeriods > 0)
+    //.filter(item => item.totalInDesiredTimePeriods > 0)
+    .filter(item => item.totalInDesiredTimeRange > 0)
     .map(item => item._id);
 
   $: relevant_timeslotsData = _.get($timeslots_data, "sortingOrder", [])
@@ -147,12 +148,12 @@
     border: 0;
     margin: 0;
     margin-top: 12px;
-    max-height: 30vh;
+    max-height: 40vh;
     overflow-y: auto;
   }
 
   .collection .chip {
-    width: 6.25em;
+    width: 6.6em;
     font-size: 0.9rem;
     text-align: center;
     user-select: none;
@@ -229,7 +230,7 @@
           <span class="card-title limitToTwoLines">{facility.name}</span>
           <a class="btn-floating halfway-fab waves-effect waves-light red">
             <i class="material-icons">
-              {$cardsToggle[facility._id] ? 'remove' : 'add'}
+              {$cardsToggle[facility._id] ? 'expand_less' : 'expand_more'}
             </i>
           </a>
         </div>
@@ -240,8 +241,8 @@
               on:click={() => update_cardToggle(facility._id)}>
               <span
                 class="new badge"
-                data-badge-caption={$timeslots_data.availabilitySummary[_id].totalInDesiredTimePeriods > 1 ? 'slots' : 'slot'}>
-                {$timeslots_data.availabilitySummary[_id].totalInDesiredTimePeriods}
+                data-badge-caption={$timeslots_data.availabilitySummary[_id].totalInDesiredTimeRange > 1 ? 'slots' : 'slot'}>
+                {$timeslots_data.availabilitySummary[_id].totalInDesiredTimeRange}
               </span>
 
             </div>
@@ -272,29 +273,27 @@
 
           <ul class="collection">
             {#each Object.entries(courts) as [courtName, allSlots], j}
-              {#if $cardsToggle[facility._id] && $timeslots_data.availabilitySummary[_id].courts[courtName].totalInDesiredTimePeriods > 0}
+              {#if $cardsToggle[facility._id] && $timeslots_data.availabilitySummary[_id].courts[courtName].totalInDesiredTimeRange > 0}
                 <li
                   key={`${_id}_${courtName}`}
                   class="collection-item"
                   transition:fade={{ duration: 200 }}>
                   <div class="row facilityTitle">
-                    <strong>{courtName}</strong>
+                    <strong>{_.startCase(_.toLower(courtName))}</strong>
                   </div>
                   <div class="row">
-                    {#each Object.entries(allSlots) as [slotName, { status, timePeriod, startTime, endTime }], k}
-                      {#if $timePeriodToSearch.includes(timePeriod)}
-                        {#if status >= 1}
-                          <div
-                            class="chip {chipColors[timePeriod]} tooltipped"
-                            data-position="bottom"
-                            data-tooltip={`${moment(startTime).format('hh:mm A')} - ${moment(endTime).format('hh:mm A')}`}
-                            transition:fade={{ duration: 200 }}>
-                            <!--<img
+                    {#each Object.entries(allSlots) as [slotName, { status, timePeriod, startTime, endTime, isInDesiredTimeRange }], k}
+                      {#if isInDesiredTimeRange && status >= 1}
+                        <div
+                          class="chip {chipColors[timePeriod]} tooltipped"
+                          data-position="bottom"
+                          data-tooltip={`${moment(startTime).format('hh:mm A')} - ${moment(endTime).format('hh:mm A')}`}
+                          transition:fade={{ duration: 200 }}>
+                          <!--<img
                                   src="images/{timePeriod}.png"
                                   alt={timePeriod} />-->
-                            {slotName}
-                          </div>
-                        {/if}
+                          {slotName}
+                        </div>
                       {/if}
                     {/each}
                   </div>

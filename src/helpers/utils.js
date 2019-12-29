@@ -41,8 +41,11 @@ export const fetch_timeslots = async (options = {}) => {
 export const fetch_searchLocations = async (options = {}) => {
   const { value = false } = options;
 
+  const value_lowercase = `${value}`.toLowerCase();
   if (value) {
-    let response = await fetch(`${api_baseUrl}/locations/${value}.json`);
+    let response = await fetch(
+      `${api_baseUrl}/locations/${value_lowercase}.json`
+    );
     let data = await response.json();
     return data;
   } else {

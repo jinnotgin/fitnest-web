@@ -4,6 +4,7 @@
   import DateBar from "../components/DateBar.svelte";
   import Spinner from "../components/Spinner.svelte";
   import CardsContainer from "../components/CardsContainer.svelte";
+  import TimeSlider from "../components/TimeSlider.svelte";
   import {
     fetch_timeslots,
     fetch_searchLocations,
@@ -21,7 +22,8 @@
     constants,
     dateToSearch,
     sportToSearch,
-    timePeriodToSearch,
+    // timePeriodToSearch, // depreciated
+    timeRangeToSearch,
     locationToSearch,
     searchPeriodStart,
     searchPeriodEnd,
@@ -56,8 +58,9 @@
   let location_searchTerm = "";
   let location_responseData = {};
   const update_location_searchTerm = value => {
-    console.log({ value });
+    //console.log({ value });
     location_searchTerm = value;
+    console.log({ location_searchTerm });
 
     if (value === "") {
       console.log("removing any location effects");
@@ -115,7 +118,8 @@
   // recalculate availalbility if ncesssary
   $: {
     //console.log({ $timePeriodToSearch });
-    $timePeriodToSearch && updatePage(true);
+    //$timePeriodToSearch && updatePage(true);
+    $timeRangeToSearch && updatePage(true);
   }
 
   /*$: {
@@ -130,104 +134,52 @@
       totalFacilitiesInDesiredTimePeriods: 0
     };
 
-    const index_timeslots_data = timeslotData => {
-      let output = {
-        ...timeslotData,
-        totalFacilitiesInDesiredTimePeriods: 0
-      };
+    const index_timeslots_data = ($timeslots_data, callback) => {
       const toUpdate_cardsToggle = {};
-
-      Object.values(_.get(output, "availabilitySummary", {})).map(
-        availiabilityData => {
-          const { _id, date } = availiabilityData;
-          const { sport_source_id, facility } = output.facilitySportDay[_id];
-
+      Object.values(_.get($timeslots_data, "facilitySportDay", {})).map(
+        ({ _id, courts, facility, sport_source_id, date }) => {
           // cardsToggle
           // if new facilities are found, add them to cardsToggle
-          //console.log(facility);
           if ($cardsToggle[facility._id] == undefined)
             toUpdate_cardsToggle[facility._id] = false;
-
-          // facilitySportDay
-          // add a url to facilitySportDay
-          const { source, source_id } = facility;
-          let url = "#";
-          if (source == "ActiveSG") {
-            url = `https://members.myactivesg.com/facilities/view/activity/${sport_source_id}/venue/${source_id}?time_from=${moment(
-              date
-            ).unix()}`;
-          } else if (source == "onePA") {
-            url = `https://www.onepa.sg/facilities/${sport_source_id}`;
-          }
-          output.facilitySportDay[_id].url = url;
-
-          // availabilitySummary
-          // compute total for facilities in general
-          output.availabilitySummary[_id].totalInDesiredTimePeriods = 0;
-          $timePeriodToSearch.map(period => {
-            output.availabilitySummary[_id].totalInDesiredTimePeriods +=
-              availiabilityData[period];
-          });
-
-          // availabilitySummary
-          // update totalFacilitiesInDesiredTimePeriods
-          output.totalFacilitiesInDesiredTimePeriods +=
-            output.availabilitySummary[_id].totalInDesiredTimePeriods > 0
-              ? 1
-              : 0;
-
-          // availabilitySummary
-          // compute total for each court in a facility
-          Object.entries(availiabilityData.courts).map(
-            ([courtName, courtAvailabilityData]) => {
-              output.availabilitySummary[_id].courts[
-                courtName
-              ].totalInDesiredTimePeriods = 0;
-              $timePeriodToSearch.map(period => {
-                output.availabilitySummary[_id].courts[
-                  courtName
-                ].totalInDesiredTimePeriods += courtAvailabilityData[period];
-              });
-            }
-          );
         }
       );
 
-      // determine general sorting order of all items
-      // account for facilities that have been toggled on already
-      const toSort_untoggled = [];
-      const toSort_toggled = [];
-      Object.keys(output.availabilitySummary).map(facilitySportDay_id => {
-        const facility_id =
-          output.facilitySportDay[facilitySportDay_id].facility._id;
+      // to make Worker ... work with SSR
+      if (typeof Worker === "undefined") {
+        callback($timeslots_data);
+      } else {
+        const worker = new Worker("/workers/timeslots_indexer.js");
 
-        if ($cardsToggle[facility_id]) toSort_toggled.push(facilitySportDay_id);
-        else toSort_untoggled.push(facilitySportDay_id);
-      });
-      const sortingFunction = (a, b) =>
-        output.availabilitySummary[b].totalInDesiredTimePeriods -
-        output.availabilitySummary[a].totalInDesiredTimePeriods;
+        worker.addEventListener(
+          "message",
+          function(e) {
+            const { data } = e;
+            console.log(data);
+            callback(data);
+            worker.terminate();
+          },
+          false
+        );
 
-      output.sortingOrder = [
-        ...toSort_toggled.sort(sortingFunction),
-        ...toSort_untoggled.sort(sortingFunction)
-      ];
-
-      cardsToggle.update(item => {
-        return { ...item, ...toUpdate_cardsToggle };
-      });
-
-      return output;
+        worker.postMessage({
+          $timeslots_data,
+          $timeRangeToSearch,
+          $dateToSearch,
+          $cardsToggle
+        });
+      }
     };
+
     let error = {
       status: "error",
       data: "Unknown error has occured."
     };
 
     if (indexOnly) {
-      const reindexed_timeslots_data = index_timeslots_data($timeslots_data);
-      timeslots_data.update(() => reindexed_timeslots_data);
-      //console.log(reindexed_timeslots_data);
+      index_timeslots_data($timeslots_data, processedData => {
+        timeslots_data.update(() => processedData);
+      });
     } else {
       setLoading(true);
 
@@ -245,13 +197,13 @@
           if (_.get(responseValue, "status", "error") != "success") {
             timeslots_data.update(() => error);
           } else {
-            const indexed_timeslots_data = index_timeslots_data(
-              _.get(responseValue, "data", {})
+            index_timeslots_data(
+              _.get(responseValue, "data", {}),
+              processedData => {
+                timeslots_data.update(() => processedData);
+                setLoading(false);
+              }
             );
-            timeslots_data.update(() => {
-              return indexed_timeslots_data;
-            });
-            setLoading(false);
           }
         })
         .catch(error => {
@@ -346,6 +298,10 @@
   .searchLocation_cancelContainer.active i {
     color: #525e6b;
   }
+
+  label.autocomplete-input_label {
+    transform: translateY(-14px) scale(0.8);
+  }
 </style>
 
 <svelte:head>
@@ -361,9 +317,10 @@
       <option value="tennis" disabled>Tennis</option>
       <option value="squash" disabled>Squash</option>
     </select>
-    <label>Sport</label>
+    <label>🏸 Sport</label>
   </div>
 
+  <!--
   <div class="input-field col s12 m8 l4">
     <select class="select_timeOfDay" multiple bind:value={$timePeriodToSearch}>
       {#each ['morning', 'afternoon', 'evening'] as timeOfDay, i}
@@ -372,14 +329,17 @@
     </select>
     <label>Time</label>
   </div>
+	-->
 
-  <div class="col s12 m12 l6 searchLocation_overallContainer">
+  <div class="col s12 m8 l10 searchLocation_overallContainer">
     <div class="input-field searchLocation_inputGroupContainer">
       <input
         type="text"
         class="autocomplete searchLocation_input"
         on:input={handleSearchInput} />
-      <label for="autocomplete-input">🔍 Search Location (optional)</label>
+      <label class="autocomplete-input_label" for="autocomplete-input">
+        🎯 Nearby (Optional)
+      </label>
     </div>
     <div
       class="searchLocation_cancelContainer {location_searchTerm != '' ? 'active' : ''}"
@@ -391,6 +351,12 @@
       }}>
       <i class="material-icons">cancel</i>
     </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col s12">
+    <TimeSlider />
   </div>
 </div>
 
@@ -414,10 +380,10 @@
     {/if}
     {#if !$isLoading_home && $timeslots_data.totalFacilitiesInDesiredTimePeriods === 0}
       <div class="row">
-        <h1 class="col s12 noCardsMessage">
+        <h1 class="col s12 noCardsMessage" transit:fade>
           Bummer! There are no venues available. 😢
         </h1>
-        <h6 class="noCardsSubtitle">
+        <h6 class="noCardsSubtitle" transit:fade>
           Perhaps try another date, time or location?
         </h6>
       </div>
