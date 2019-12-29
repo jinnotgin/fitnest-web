@@ -39,15 +39,19 @@
           mode: "steps",
           density: 5,
           filter: value => {
-            if (value == 7 || value == 22) return -1;
-            else if ((value * 2) % 2 == 1) {
+            if ([7, 22].includes(value)) {
+              return -1;
+            } else if ([10, 14, 18].includes(value)) {
+              // if value is a multiple of 3, give it "noUi-value-sub-normal" class
+              return 3;
+            } else if ((value * 2) % 2 == 1) {
               // if value includes a .5, hide the pip value
               return 0;
             } else if (value % 2 == 0) {
               // if value is an even number, give it "noUi-value-large" class
               return 1;
             } else {
-              // else, give it "noUi-value-small" class
+              // else, give it "noUi-value-sub" class
               return 2;
             }
           },

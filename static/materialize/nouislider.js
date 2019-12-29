@@ -1237,6 +1237,7 @@ typeof b&&isFinite(b)?b:!1}function x(b){var f,c,d,e={};for(f=0;f<h.length;f+=1)
             var PIPS_NO_VALUE = 0;
             var PIPS_LARGE_VALUE = 1;
             var PIPS_SMALL_VALUE = 2;
+            var JIN_PIPS_MEDIUM_VALUE = 3;
 
             var element = scope_Document.createElement("div");
 
@@ -1244,11 +1245,13 @@ typeof b&&isFinite(b)?b:!1}function x(b){var f,c,d,e={};for(f=0;f<h.length;f+=1)
             valueSizeClasses[PIPS_NO_VALUE] = options.cssClasses.valueNormal;
             valueSizeClasses[PIPS_LARGE_VALUE] = options.cssClasses.valueLarge;
             valueSizeClasses[PIPS_SMALL_VALUE] = options.cssClasses.valueSub;
+            valueSizeClasses[JIN_PIPS_MEDIUM_VALUE] = 'noUi-value-sub-medium';
 
             var markerSizeClasses = [];
             markerSizeClasses[PIPS_NO_VALUE] = options.cssClasses.markerNormal;
             markerSizeClasses[PIPS_LARGE_VALUE] = options.cssClasses.markerLarge;
             markerSizeClasses[PIPS_SMALL_VALUE] = options.cssClasses.markerSub;
+            markerSizeClasses[JIN_PIPS_MEDIUM_VALUE] = options.cssClasses.markerSub;
 
             var valueOrientationClasses = [options.cssClasses.valueHorizontal, options.cssClasses.valueVertical];
             var markerOrientationClasses = [options.cssClasses.markerHorizontal, options.cssClasses.markerVertical];

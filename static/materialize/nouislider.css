@@ -422,7 +422,7 @@
 
 .noUi-target.noUi-horizontal .noUi-tooltip {
   opacity: 0;
-  width: 80px;
+  width: 90px;
   background-color: #26a69a;
   color: white;
   border-radius: 15px 15px 15px 15px;
@@ -434,6 +434,9 @@
 }
 
 .noUi-target.noUi-horizontal .noUi-pips.noUi-pips-horizontal .noUi-value-sub,
+.noUi-target.noUi-horizontal
+  .noUi-pips.noUi-pips-horizontal
+  .noUi-value-sub-medium,
 .noUi-target.noUi-horizontal .noUi-pips.noUi-pips-horizontal .noUi-value-large {
   margin-top: 5px;
   font-size: 14px;
@@ -444,8 +447,19 @@
   height: 15px;
 }
 
-.noUi-target.noUi-horizontal .noUi-pips.noUi-pips-horizontal .noUi-value-sub {
+.noUi-target.noUi-horizontal .noUi-pips.noUi-pips-horizontal .noUi-value-sub,
+.noUi-target.noUi-horizontal
+  .noUi-pips.noUi-pips-horizontal
+  .noUi-value-sub-medium {
   opacity: 0;
+}
+
+@media only screen and (min-width: 600px) {
+  .noUi-target.noUi-horizontal
+    .noUi-pips.noUi-pips-horizontal
+    .noUi-value-sub-medium {
+    opacity: 1;
+  }
 }
 
 @media only screen and (min-width: 992px) {
