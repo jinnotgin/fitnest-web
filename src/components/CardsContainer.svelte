@@ -159,6 +159,10 @@
     user-select: none;
   }
 
+  .collection .chip.peak {
+    background-color: rgb(255, 205, 210);
+  }
+
   .card-action {
     display: flex;
     justify-content: center;
@@ -285,7 +289,7 @@
                     {#each Object.entries(allSlots) as [slotName, { status, timePeriod, startTime, endTime, isInDesiredTimeRange }], k}
                       {#if isInDesiredTimeRange && status >= 1}
                         <div
-                          class="chip {chipColors[timePeriod]} tooltipped"
+                          class="chip {status > 1 ? 'peak' : ''} tooltipped"
                           data-position="bottom"
                           data-tooltip={`${moment(startTime).format('hh:mm A')} - ${moment(endTime).format('hh:mm A')}`}
                           transition:fade={{ duration: 200 }}>

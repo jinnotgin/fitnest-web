@@ -11,7 +11,6 @@ self.addEventListener(
       $dateToSearch,
       $cardsToggle
     } = e.data;
-    console.log($timeslots_data, $timeRangeToSearch);
 
     const index_timeslots_data = timeslotData => {
       let output = {
