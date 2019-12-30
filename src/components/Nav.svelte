@@ -7,13 +7,14 @@
   .nav-wrapper {
     margin: 0 20px;
     height: 64px;
+    user-select: none;
   }
 </style>
 
 <nav class="teal">
   <div class="nav-wrapper">
-    <span class="brand-logo">{$constants.name}</span>
-    <ul id="nav-mobile" class="right hide-on-med-and-down">
+    <a class="brand-logo" href="/">{$constants.name}</a>
+    <ul class="right hide-on-med-and-down">
       <li>
         <a class:selected={segment === undefined} href=".">home</a>
       </li>

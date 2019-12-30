@@ -310,7 +310,7 @@
 
 <!-- search bar could be refactored as a component in the future-->
 <div class="row searchBar">
-  <div class="input-field col s12 m4 l2">
+  <div class="input-field col s5 m4 l2">
     <select bind:value={$sportToSearch}>
       <!--<option value="" disabled selected>Choose your option</option>-->
       <option value="badminton">Badminton</option>
@@ -331,7 +331,7 @@
   </div>
 	-->
 
-  <div class="col s12 m8 l10 searchLocation_overallContainer">
+  <div class="col s7 m8 l10 searchLocation_overallContainer">
     <div class="input-field searchLocation_inputGroupContainer">
       <input
         type="text"

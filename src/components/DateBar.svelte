@@ -5,6 +5,8 @@
 
   export let allDates, activeDate, dateSelectedHandler;
 
+  let elem_dateTabs, elem_dateSelector;
+
   let selectedDate = activeDate;
 
   // assignments
@@ -16,21 +18,38 @@
   function showNextDateTabIfNecessary(clickedElem, newDate) {
     const newDate_index = allDates.indexOf(newDate);
 
-    const scrollOptions = {
-      behavior: "smooth",
-      block: "end",
-      inline: "nearest"
-    };
+    const dateTab_leftScrollPos = elem_dateTabs.scrollLeft;
+    const dateTab_rightScrollPos =
+      dateTab_leftScrollPos + elem_dateTabs.clientWidth;
+
+    const a = clickedElem.parentElement.nextElementSibling.getBoundingClientRect();
+    console.log({ dateTab_leftScrollPos, dateTab_rightScrollPos, a });
 
     if (
       newDate_index != allDates.length - 1 &&
-      newDate_index > prevActiveDateTab_index
-    )
-      clickedElem.nextElementSibling &&
-        clickedElem.nextElementSibling.scrollIntoView(scrollOptions);
-    else if (newDate_index != 0 && newDate_index < prevActiveDateTab_index)
-      clickedElem.previousElementSibling &&
-        clickedElem.previousElementSibling.scrollIntoView(scrollOptions);
+      newDate_index > prevActiveDateTab_index &&
+      clickedElem.nextElementSibling.offsetLeft +
+        clickedElem.nextElementSibling.offsetWidth >
+        dateTab_rightScrollPos
+    ) {
+      console.log(clickedElem);
+      console.log(clickedElem.nextElementSibling);
+      console.log(
+        clickedElem.nextElementSibling.getBoundingClientRect().left,
+        dateTab_rightScrollPos
+      );
+      scrollDateBar("right");
+    } else if (
+      newDate_index != 0 &&
+      newDate_index < prevActiveDateTab_index &&
+      clickedElem.previousElementSibling.offsetLeft < dateTab_leftScrollPos
+    ) {
+      console.log(
+        clickedElem.previousElementSibling.getBoundingClientRect().right,
+        dateTab_leftScrollPos
+      );
+      scrollDateBar("left");
+    }
 
     prevActiveDateTab_index = newDate_index;
     M_dateSelector.setDate(newDate); // need to find out why svelte's reactivity is not affect date picker
@@ -61,18 +80,15 @@
   }
 
   onMount(() => {
-    M_dateTabs = M.Tabs.init(document.querySelector(".dateTabs"));
+    M_dateTabs = M.Tabs.init(elem_dateTabs);
 
-    M_dateSelector = M.Datepicker.init(
-      document.querySelector(".dateSelector"),
-      {
-        defaultDate: activeDate,
-        setDefaultDate: true,
-        minDate: allDates[0],
-        maxDate: allDates[allDates.length - 1],
-        onClose: datePickerClose
-      }
-    );
+    M_dateSelector = M.Datepicker.init(elem_dateSelector, {
+      defaultDate: activeDate,
+      setDefaultDate: true,
+      minDate: allDates[0],
+      maxDate: allDates[allDates.length - 1],
+      onClose: datePickerClose
+    });
   });
 </script>
 
@@ -81,11 +97,13 @@
     display: flex;
     align-items: center;
     user-select: none;
+    z-index: 1;
   }
 
   .actionable {
     cursor: pointer;
     margin: 0 6px;
+    z-index: 2;
   }
 
   .actionable:hover {
@@ -95,9 +113,14 @@
   }
 
   .dateTabs {
-    overflow-x: hidden;
+    overflow-x: auto;
     flex: 1;
     text-align: center;
+  }
+
+  .dateTabs::-webkit-scrollbar {
+    height: 0px; /* Remove scrollbar space */
+    background: transparent; /* Optional: just make scrollbar invisible */
   }
 
   .dateTabs_button {
@@ -163,18 +186,22 @@
 </style>
 
 <div class="dateTabs_container z-depth-1">
-  <i class="actionable material-icons" on:click={() => scrollDateBar('left')}>
+  <i
+    class="actionable material-icons hide-on-small-only"
+    on:click={() => scrollDateBar('left')}>
     chevron_left
   </i>
-  <ul class="dateTabs tabs">
+  <ul class="dateTabs tabs" bind:this={elem_dateTabs}>
     {#each allDates as date, i}
-      <li key="dateTab-{date.getTime()}" class="tab">
-        <a
-          class={moment(date).isSame(activeDate, 'day') && 'active'}
-          on:click={e => {
-            callbackHandler(dateSelectedHandler, { dateSelected: date });
-            showNextDateTabIfNecessary(e.target.parentElement, date);
-          }}>
+      <li
+        key="dateTab-{date.getTime()}"
+        class="tab"
+        on:click={e => {
+          e.preventDefault();
+          callbackHandler(dateSelectedHandler, { dateSelected: date });
+          showNextDateTabIfNecessary(e.target.parentElement, date);
+        }}>
+        <a class={moment(date).isSame(activeDate, 'day') && 'active'}>
           <strong>
             {moment(date).isSame(new Date(), 'day') ? 'Today' : moment(date).format('ddd')}
           </strong>
@@ -184,11 +211,15 @@
       </li>
     {/each}
   </ul>
-  <i class="material-icons actionable" on:click={() => scrollDateBar('right')}>
+  <i
+    class="material-icons actionable hide-on-small-only"
+    on:click={() => scrollDateBar('right')}>
     chevron_right
   </i>
   <div class="dateTabs_button">
-    <a class="waves-effect waves-light btn dateSelector">
+    <a
+      class="waves-effect waves-light btn dateSelector"
+      bind:this={elem_dateSelector}>
       <i class="material-icons left">date_range</i>
       <span class="hide-on-small-only">Select</span>
       <span class="hide-on-med-and-down">Date</span>

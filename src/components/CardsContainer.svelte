@@ -12,7 +12,7 @@
 
   // personal store
   import {
-    timePeriodToSearch,
+    timeRangeToSearch,
     timeslots_data,
     cardsToggle,
     locationToSearch,
@@ -32,10 +32,10 @@
       // to init tooltips in the next tick
       setTimeout(() => {
         M.Tooltip.init(document.querySelectorAll(".tooltipped"), {
-          enterDelay: 300,
+          enterDelay: 250,
           margin: 0
         });
-      }, 0);
+      }, 400);
     }
   };
 
@@ -68,7 +68,7 @@
   };
 
   $: {
-    $cardsToggle && initTooltips();
+    ($cardsToggle || $timeRangeToSearch) && initTooltips();
   }
 
   // onmount stuff for materialize
@@ -159,6 +159,10 @@
     user-select: none;
   }
 
+  .collection .chip.peak {
+    background-color: rgb(255, 205, 210);
+  }
+
   .card-action {
     display: flex;
     justify-content: center;
@@ -217,9 +221,29 @@
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2; /* number of lines to show */
   }
+
+  .card-content ul.collection::-webkit-scrollbar-track {
+    -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+  }
+
+  .card-content ul.collection::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  @media only screen and (min-width: 600px) {
+    .card-content ul.collection::-webkit-scrollbar {
+      width: 8px;
+    }
+  }
+
+  .card-content ul.collection::-webkit-scrollbar-thumb {
+    background-color: #aaa;
+    border-radius: 12px;
+  }
 </style>
 
-<div class="cardsContainer" transit:fade>
+<div class="cardsContainer">
   {#each Object.values(relevant_timeslotsData) as { _id, courts, facility, sport_source_id, date, url }, i}
     {#if !$isLoading_home}
       <div key={_id} class="card">
@@ -285,7 +309,7 @@
                     {#each Object.entries(allSlots) as [slotName, { status, timePeriod, startTime, endTime, isInDesiredTimeRange }], k}
                       {#if isInDesiredTimeRange && status >= 1}
                         <div
-                          class="chip {chipColors[timePeriod]} tooltipped"
+                          class="chip {status > 1 ? 'peak' : ''} tooltipped"
                           data-position="bottom"
                           data-tooltip={`${moment(startTime).format('hh:mm A')} - ${moment(endTime).format('hh:mm A')}`}
                           transition:fade={{ duration: 200 }}>

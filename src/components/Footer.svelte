@@ -28,6 +28,9 @@
   .page-footer .container .author {
     flex: 1;
   }
+  .informationLastUpdated {
+    cursor: default;
+  }
 </style>
 
 <footer class="page-footer teal">
