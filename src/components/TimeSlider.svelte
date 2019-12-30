@@ -1,14 +1,43 @@
 <script>
   import { onMount } from "svelte";
+  import { uniqueIdGenerator } from "../helpers/utils";
   import { timeRangeToSearch } from "../routes/_stores.js";
+  import moment from "moment";
 
   let slider;
+  const slider_id = `slider_${uniqueIdGenerator()}`;
+
+  const tooltip_format_options = {
+    // 'to' the formatted value. Receives a number.
+    to: function(value) {
+      return `${
+        Math.floor(value) > 12 ? Math.floor(value - 12) : Math.floor(value)
+      }:${
+        (value * 2) % 2 == 0 ? "00" : "30"
+      }<span class="hide-on-med-and-up"> ${
+        Math.floor(value) > 11 ? "PM" : "AM"
+      }</span>`;
+    },
+    // 'from' the formatted value.
+    // Receives a string, should return a number.
+    from: function(value) {
+      return Number(value);
+    }
+  };
+
+  const timeStrToHour = timeStr => {
+    const timeMoment = moment(timeStr, "h:mm A");
+    return timeMoment.hour() + timeMoment.minute() / 60;
+  };
 
   onMount(() => {
-    slider = document.getElementById("test-slider");
+    slider = document.getElementById(slider_id);
     noUiSlider
       .create(slider, {
-        start: [14, 18], // remember to sync this value with the store's default timeRangeToSearch
+        start: [
+          timeStrToHour($timeRangeToSearch[0]),
+          timeStrToHour($timeRangeToSearch[1])
+        ], // remember to sync this value with the store's default timeRangeToSearch
         connect: true,
         step: 0.5,
         behaviour: "drag",
@@ -17,7 +46,7 @@
           min: 7,
           max: 22
         },
-        tooltips: [true, true],
+        tooltips: [tooltip_format_options, tooltip_format_options],
         format: {
           // 'to' the formatted value. Receives a number.
           to: function(value) {
@@ -83,8 +112,15 @@
 
 <style>
   .noUISlider_container {
-    margin-bottom: 45px;
+    margin-top: 50px;
+    margin-bottom: 25px;
+  }
+  @media only screen and (min-width: 600px) {
+    .noUISlider_container {
+      margin-top: 0;
+      margin-bottom: 45px;
+    }
   }
 </style>
 
-<div id="test-slider" class="noUISlider_container" />
+<div id={slider_id} class="noUISlider_container" />

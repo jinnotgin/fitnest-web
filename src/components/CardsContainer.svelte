@@ -12,7 +12,7 @@
 
   // personal store
   import {
-    timePeriodToSearch,
+    timeRangeToSearch,
     timeslots_data,
     cardsToggle,
     locationToSearch,
@@ -32,10 +32,10 @@
       // to init tooltips in the next tick
       setTimeout(() => {
         M.Tooltip.init(document.querySelectorAll(".tooltipped"), {
-          enterDelay: 300,
+          enterDelay: 250,
           margin: 0
         });
-      }, 0);
+      }, 400);
     }
   };
 
@@ -68,7 +68,7 @@
   };
 
   $: {
-    $cardsToggle && initTooltips();
+    ($cardsToggle || $timeRangeToSearch) && initTooltips();
   }
 
   // onmount stuff for materialize
@@ -221,9 +221,23 @@
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2; /* number of lines to show */
   }
+
+  .card-content ul.collection::-webkit-scrollbar-track {
+    -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+  }
+
+  .card-content ul.collection::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  .card-content ul.collection::-webkit-scrollbar-thumb {
+    background-color: #aaa;
+    border-radius: 10px;
+  }
 </style>
 
-<div class="cardsContainer" transit:fade>
+<div class="cardsContainer">
   {#each Object.values(relevant_timeslotsData) as { _id, courts, facility, sport_source_id, date, url }, i}
     {#if !$isLoading_home}
       <div key={_id} class="card">
