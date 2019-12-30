@@ -224,16 +224,22 @@
 
   .card-content ul.collection::-webkit-scrollbar-track {
     -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
-    border-radius: 10px;
+    border-radius: 12px;
   }
 
   .card-content ul.collection::-webkit-scrollbar {
-    width: 10px;
+    width: 6px;
+  }
+
+  @media only screen and (min-width: 600px) {
+    .card-content ul.collection::-webkit-scrollbar {
+      width: 8px;
+    }
   }
 
   .card-content ul.collection::-webkit-scrollbar-thumb {
     background-color: #aaa;
-    border-radius: 10px;
+    border-radius: 12px;
   }
 </style>
 
