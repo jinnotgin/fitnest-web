@@ -121,6 +121,11 @@
     /*grid-row-gap: 15px;*/
   }
 
+  .noOpacity {
+    opacity: 0;
+    visibility: hidden;
+  }
+
   .card-image {
     height: 55px;
   }
@@ -296,97 +301,92 @@
   }
 </style>
 
-<div class="cardsContainer">
-  {#if !$isLoading_home}
-    {#each Object.values(relevant_timeslotsData) as { _id, courts, facility, sport_source_id, date, url } (facility._id)}
+<div class="cardsContainer {$isLoading_home ? 'noOpacity' : ''}">
+  {#each Object.values(relevant_timeslotsData).slice(0, 15) as { _id, courts, facility, sport_source_id, date, url }, i (facility._id)}
+    <div
+      class="card "
+      in:receive={{ key: facility._id }}
+      out:send={{ key: facility._id }}
+      animate:flip={{ duration: 450 }}>
       <div
-        class="card"
-        in:receive={{ key: facility._id }}
-        out:send={{ key: facility._id }}
-        animate:flip={{ duration: 450 }}>
-        <div
-          class="card-image clickable {_.get(facility, 'source', '')}"
-          on:click={() => update_cardToggle(facility._id)}>
-          <img src="images/transparent.png" />
-          <span class="card-title limitTextLines">{facility.name}</span>
-          <a class="btn-floating halfway-fab waves-effect waves-light red">
-            <i class="material-icons">
-              {$cardsToggle[facility._id] ? 'expand_less' : 'expand_more'}
-            </i>
-          </a>
-        </div>
-        <div class="card-content">
-          <div class="facility_infoSnippets_container">
-            <div
-              class="facility_infoSnippets_availability clickable"
-              on:click={() => update_cardToggle(facility._id)}>
-              <span
-                class="new badge"
-                data-badge-caption={$timeslots_data.availabilitySummary[_id].totalInDesiredTimeRange > 1 ? 'slots' : 'slot'}>
-                {$timeslots_data.availabilitySummary[_id].totalInDesiredTimeRange}
-              </span>
+        class="card-image clickable {_.get(facility, 'source', '')}"
+        on:click={() => update_cardToggle(facility._id)}>
+        <img src="images/transparent.png" />
+        <span class="card-title limitTextLines">{facility.name}</span>
+        <a class="btn-floating halfway-fab waves-effect waves-light red">
+          <i class="material-icons">
+            {$cardsToggle[facility._id] ? 'expand_less' : 'expand_more'}
+          </i>
+        </a>
+      </div>
+      <div class="card-content">
+        <div class="facility_infoSnippets_container">
+          <div
+            class="facility_infoSnippets_availability clickable"
+            on:click={() => update_cardToggle(facility._id)}>
+            <span
+              class="new badge"
+              data-badge-caption={$timeslots_data.availabilitySummary[_id].totalInDesiredTimeRange > 1 ? 'slots' : 'slot'}>
+              {$timeslots_data.availabilitySummary[_id].totalInDesiredTimeRange}
+            </span>
 
-            </div>
-            <div
-              class="chip facility_infoSnippets_statistic modal-trigger
-              clickable"
-              data-target={map_modal_id}
-              on:click={() => {
-                mapModal_clickedFacility = facility;
-              }}>
-              <i class="material-icons">location_on</i>
-              {#if $locationToSearch.lat != false && $locationToSearch.lng != false}
-                {distanceInKmBetweenEarthCoordinates(_.get(facility, 'loc.coordinates[1]', 0), _.get(facility, 'loc.coordinates[0]', 0), $locationToSearch.lat, $locationToSearch.lng).toFixed(2)}
-                km
-              {:else}Map{/if}
-            </div>
-            <div
-              class="chip facility_infoSnippets_statistic clickable"
-              on:click={() => {
-                window.open(url, '_blank');
-              }}>
-              <i class="material-icons">info</i>
-              <a href={url} target="_blank" on:click={e => e.preventDefault()}>
-                {_.get(facility, 'source', '')}
-              </a>
-            </div>
           </div>
+          <div
+            class="chip facility_infoSnippets_statistic modal-trigger clickable"
+            data-target={map_modal_id}
+            on:click={() => {
+              mapModal_clickedFacility = facility;
+            }}>
+            <i class="material-icons">location_on</i>
+            {#if $locationToSearch.lat != false && $locationToSearch.lng != false}
+              {distanceInKmBetweenEarthCoordinates(_.get(facility, 'loc.coordinates[1]', 0), _.get(facility, 'loc.coordinates[0]', 0), $locationToSearch.lat, $locationToSearch.lng).toFixed(2)}
+              km
+            {:else}Map{/if}
+          </div>
+          <div
+            class="chip facility_infoSnippets_statistic clickable"
+            on:click={() => {
+              window.open(url, '_blank');
+            }}>
+            <i class="material-icons">info</i>
+            <a href={url} target="_blank" on:click={e => e.preventDefault()}>
+              {_.get(facility, 'source', '')}
+            </a>
+          </div>
+        </div>
 
-          {#if $cardsToggle[facility._id]}
-            <ul class="collection">
-              {#each Object.entries(courts) as [courtName, allSlots], j (`${_id}_${courtName}`)}
-                {#if $timeslots_data.availabilitySummary[_id].courts[courtName].totalInDesiredTimeRange > 0}
-                  <li
-                    class="collection-item"
-                    transition:fade={{ duration: 200 }}>
-                    <div class="row facilityTitle">
-                      <strong>{_.startCase(_.toLower(courtName))}</strong>
-                    </div>
-                    <div class="row">
-                      {#each Object.entries(allSlots) as [slotName, { status, timePeriod, startTime, endTime, isInDesiredTimeRange }], k}
-                        {#if isInDesiredTimeRange && status >= 1}
-                          <div
-                            class="chip {status > 1 ? 'peak' : ''} tooltipped"
-                            data-position="bottom"
-                            data-tooltip={`${moment(startTime).format('hh:mm A')} - ${moment(endTime).format('hh:mm A')}`}
-                            transition:fade={{ duration: 200 }}>
-                            <!--<img
+        {#if $cardsToggle[facility._id]}
+          <ul class="collection">
+            {#each Object.entries(courts) as [courtName, allSlots], j (`${_id}_${courtName}`)}
+              {#if $timeslots_data.availabilitySummary[_id].courts[courtName].totalInDesiredTimeRange > 0}
+                <li class="collection-item" transition:fade={{ duration: 200 }}>
+                  <div class="row facilityTitle">
+                    <strong>{_.startCase(_.toLower(courtName))}</strong>
+                  </div>
+                  <div class="row">
+                    {#each Object.entries(allSlots) as [slotName, { status, timePeriod, startTime, endTime, isInDesiredTimeRange }], k}
+                      {#if isInDesiredTimeRange && status >= 1}
+                        <div
+                          class="chip {status > 1 ? 'peak' : ''} tooltipped"
+                          data-position="bottom"
+                          data-tooltip={`${moment(startTime).format('hh:mm A')} - ${moment(endTime).format('hh:mm A')}`}
+                          transition:fade={{ duration: 200 }}>
+                          <!--<img
                                   src="images/{timePeriod}.png"
                                   alt={timePeriod} />-->
-                            {slotName}
-                          </div>
-                        {/if}
-                      {/each}
-                    </div>
-                  </li>
-                {/if}
-              {/each}
-            </ul>
-          {/if}
-        </div>
+                          {slotName}
+                        </div>
+                      {/if}
+                    {/each}
+                  </div>
+                </li>
+              {/if}
+            {/each}
+          </ul>
+        {/if}
       </div>
-    {/each}
-  {/if}
+    </div>
+  {/each}
 </div>
 
 <div id={map_modal_id} class="modal modal-fixed-footer map-modal-container">
