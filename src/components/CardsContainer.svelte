@@ -19,11 +19,32 @@
     isLoading_home
   } from "../routes/_stores.js";
 
-  const chipColors = {
+  /*const chipColors = {
     morning: "cyan lighten-4",
     afternoon: "blue lighten-4",
     evening: "deep-purple lighten-4"
-  };
+  };*/
+
+  import { quintOut } from "svelte/easing";
+  import { crossfade } from "svelte/transition";
+  import { flip } from "svelte/animate";
+  const [send, receive] = crossfade({
+    duration: d => Math.sqrt(d * 200),
+
+    fallback(node, params) {
+      const style = getComputedStyle(node);
+      const transform = style.transform === "none" ? "" : style.transform;
+
+      return {
+        duration: 600,
+        easing: quintOut,
+        css: t => `
+					transform: ${transform} scale(${t});
+					opacity: ${t}
+				`
+      };
+    }
+  });
 
   const map_modal_id = `map_modal_${uniqueIdGenerator()}`;
 
@@ -97,12 +118,48 @@
     display: grid;
     grid-template-columns: 1fr;
     grid-column-gap: 10px;
-    grid-row-gap: 15px;
+    /*grid-row-gap: 15px;*/
   }
 
+  .card-image {
+    height: 55px;
+  }
+
+  .cardsContainer .card .card-title {
+    padding-bottom: 14px;
+    padding-right: 62px;
+    font-size: 20px;
+  }
+
+  .btn-floating {
+    width: 34px;
+    height: 34px;
+    bottom: -17px;
+  }
+  .btn-floating i.material-icons {
+    line-height: 34px;
+  }
   @media only screen and (min-width: 800px) {
+    .card-image {
+      height: 100px;
+    }
+
+    .cardsContainer .card .card-title {
+      font-size: 24px;
+      padding-right: 90px;
+    }
+
+    .btn-floating {
+      width: 40px;
+      height: 40px;
+      bottom: -20px;
+    }
+    .btn-floating i.material-icons {
+      line-height: 40px;
+    }
     .cardsContainer {
       grid-template-columns: 1fr 1fr;
+      grid-row-gap: 5px;
     }
   }
 
@@ -116,9 +173,6 @@
     height: fit-content;
   }
 
-  .card-image {
-    height: 100px;
-  }
   .card-image.onePA {
     background-color: #d5e0e29e;
   }
@@ -130,10 +184,6 @@
   }
   .card-image span {
     color: black;
-  }
-  .cardsContainer .card .card-title {
-    padding-bottom: 14px;
-    padding-right: 90px;
   }
 
   li.collection-item .row {
@@ -214,12 +264,12 @@
     cursor: pointer;
   }
 
-  .limitToTwoLines {
+  .limitTextLines {
     overflow: hidden;
     text-overflow: ellipsis;
     display: -webkit-box !important;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2; /* number of lines to show */
+    -webkit-line-clamp: 1; /* number of lines to show */
   }
 
   .card-content ul.collection::-webkit-scrollbar-track {
@@ -235,6 +285,9 @@
     .card-content ul.collection::-webkit-scrollbar {
       width: 8px;
     }
+    .limitTextLines {
+      -webkit-line-clamp: 2; /* number of lines to show */
+    }
   }
 
   .card-content ul.collection::-webkit-scrollbar-thumb {
@@ -244,14 +297,18 @@
 </style>
 
 <div class="cardsContainer">
-  {#each Object.values(relevant_timeslotsData) as { _id, courts, facility, sport_source_id, date, url }, i}
-    {#if !$isLoading_home}
-      <div key={_id} class="card">
+  {#if !$isLoading_home}
+    {#each Object.values(relevant_timeslotsData) as { _id, courts, facility, sport_source_id, date, url } (facility._id)}
+      <div
+        class="card"
+        in:receive={{ key: facility._id }}
+        out:send={{ key: facility._id }}
+        animate:flip={{ duration: 450 }}>
         <div
           class="card-image clickable {_.get(facility, 'source', '')}"
           on:click={() => update_cardToggle(facility._id)}>
           <img src="images/transparent.png" />
-          <span class="card-title limitToTwoLines">{facility.name}</span>
+          <span class="card-title limitTextLines">{facility.name}</span>
           <a class="btn-floating halfway-fab waves-effect waves-light red">
             <i class="material-icons">
               {$cardsToggle[facility._id] ? 'expand_less' : 'expand_more'}
@@ -295,45 +352,46 @@
             </div>
           </div>
 
-          <ul class="collection">
-            {#each Object.entries(courts) as [courtName, allSlots], j}
-              {#if $cardsToggle[facility._id] && $timeslots_data.availabilitySummary[_id].courts[courtName].totalInDesiredTimeRange > 0}
-                <li
-                  key={`${_id}_${courtName}`}
-                  class="collection-item"
-                  transition:fade={{ duration: 200 }}>
-                  <div class="row facilityTitle">
-                    <strong>{_.startCase(_.toLower(courtName))}</strong>
-                  </div>
-                  <div class="row">
-                    {#each Object.entries(allSlots) as [slotName, { status, timePeriod, startTime, endTime, isInDesiredTimeRange }], k}
-                      {#if isInDesiredTimeRange && status >= 1}
-                        <div
-                          class="chip {status > 1 ? 'peak' : ''} tooltipped"
-                          data-position="bottom"
-                          data-tooltip={`${moment(startTime).format('hh:mm A')} - ${moment(endTime).format('hh:mm A')}`}
-                          transition:fade={{ duration: 200 }}>
-                          <!--<img
+          {#if $cardsToggle[facility._id]}
+            <ul class="collection">
+              {#each Object.entries(courts) as [courtName, allSlots], j (`${_id}_${courtName}`)}
+                {#if $timeslots_data.availabilitySummary[_id].courts[courtName].totalInDesiredTimeRange > 0}
+                  <li
+                    class="collection-item"
+                    transition:fade={{ duration: 200 }}>
+                    <div class="row facilityTitle">
+                      <strong>{_.startCase(_.toLower(courtName))}</strong>
+                    </div>
+                    <div class="row">
+                      {#each Object.entries(allSlots) as [slotName, { status, timePeriod, startTime, endTime, isInDesiredTimeRange }], k}
+                        {#if isInDesiredTimeRange && status >= 1}
+                          <div
+                            class="chip {status > 1 ? 'peak' : ''} tooltipped"
+                            data-position="bottom"
+                            data-tooltip={`${moment(startTime).format('hh:mm A')} - ${moment(endTime).format('hh:mm A')}`}
+                            transition:fade={{ duration: 200 }}>
+                            <!--<img
                                   src="images/{timePeriod}.png"
                                   alt={timePeriod} />-->
-                          {slotName}
-                        </div>
-                      {/if}
-                    {/each}
-                  </div>
-                </li>
-              {/if}
-            {/each}
-          </ul>
+                            {slotName}
+                          </div>
+                        {/if}
+                      {/each}
+                    </div>
+                  </li>
+                {/if}
+              {/each}
+            </ul>
+          {/if}
         </div>
       </div>
-    {/if}
-  {/each}
+    {/each}
+  {/if}
 </div>
 
 <div id={map_modal_id} class="modal modal-fixed-footer map-modal-container">
   <div class="modal-content">
-    <h4 class="limitToTwoLines">
+    <h4 class="limitTextLines">
       <span class="hide-on-small-only">
         {mapModal_clickedFacility ? mapModal_clickedFacility.name : 'No facility information found.'}
       </span>
