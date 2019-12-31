@@ -9,11 +9,24 @@
     height: 64px;
     user-select: none;
   }
+  .brand-logo img {
+    height: 40px;
+    margin-top: 8px;
+  }
+
+  @media only screen and (min-width: 600px) {
+    .brand-logo img {
+      height: 48px;
+      margin-top: 8px;
+    }
+  }
 </style>
 
 <nav class="teal">
   <div class="nav-wrapper">
-    <a class="brand-logo" href="/">{$constants.name}</a>
+    <a class="brand-logo" href="/">
+      <img src="/images/fitnest-logo-white.png" />
+    </a>
     <ul class="right hide-on-med-and-down">
       <li>
         <a class:selected={segment === undefined} href=".">home</a>
