@@ -374,23 +374,21 @@
 <div class="row">
   <div class="col s12 m12 l12">
     {#if $isLoading_home}
-      <div class="row" in:fade>
+      <div class="row">
         <Spinner />
       </div>
     {/if}
     {#if !$isLoading_home && $timeslots_data.totalFacilitiesInDesiredTimePeriods === 0}
-      <div class="row" in:fade>
-        <h1 class="col s12 noCardsMessage">
+      <div class="row">
+        <h1 class="col s12 noCardsMessage" transit:fade>
           Bummer! There are no venues available. 😢
         </h1>
-        <h6 class="noCardsSubtitle">
+        <h6 class="noCardsSubtitle" transit:fade>
           Perhaps try another date, time or location?
         </h6>
       </div>
     {/if}
-    <div class="row">
-      <CardsContainer />
-    </div>
+    <CardsContainer />
     <!--
     <ul class="pagination">
       <li class="disabled">
