@@ -81,7 +81,7 @@ const getNearestFacilitiesObjectId = async (lat, lng) => {
       const nearestFacilityOptions = {
         loc: {
           $geoWithin: {
-            $centerSphere: [[parseFloat(lng), parseFloat(lat)], kmToRadian(4)]
+            $centerSphere: [[parseFloat(lng), parseFloat(lat)], kmToRadian(3)]
           }
         }
       };

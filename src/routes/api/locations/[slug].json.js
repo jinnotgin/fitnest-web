@@ -46,7 +46,11 @@ export async function get(req, res, next) {
 
       const processed = {};
       result.map(({ building, lat, lng }) => {
-        processed[_.startCase(_.toLower(building))] = [lat, lng];
+        processed[
+          _.startCase(_.toLower(building))
+            .replace("Mrt", "MRT")
+            .replace("Lrt", "LRT")
+        ] = [lat, lng];
       });
       return processed;
     } finally {

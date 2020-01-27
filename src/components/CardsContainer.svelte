@@ -123,7 +123,6 @@
 
   .noOpacity {
     opacity: 0;
-    visibility: hidden;
   }
 
   .card-image {
@@ -302,7 +301,7 @@
 </style>
 
 <div class="cardsContainer {$isLoading_home ? 'noOpacity' : ''}">
-  {#each Object.values(relevant_timeslotsData).slice(0, 15) as { _id, courts, facility, sport_source_id, date, url }, i (facility._id)}
+  {#each Object.values(relevant_timeslotsData) as { _id, courts, facility, sport_source_id, date, url }, i (facility._id)}
     <div
       class="card "
       in:receive={{ key: facility._id }}
