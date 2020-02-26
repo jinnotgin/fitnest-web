@@ -303,10 +303,12 @@
 <div class="cardsContainer {$isLoading_home ? 'noOpacity' : ''}">
   {#each Object.values(relevant_timeslotsData) as { _id, courts, facility, sport_source_id, date, url }, i (facility._id)}
     <div
-      class="card "
+      class="card"
+      <!--
       in:receive={{ key: facility._id }}
       out:send={{ key: facility._id }}
       animate:flip={{ duration: 450 }}>
+      -->
       <div
         class="card-image clickable {_.get(facility, 'source', '')}"
         on:click={() => update_cardToggle(facility._id)}>
