@@ -77,6 +77,7 @@
       `li.tab[key="dateTab-${date.getTime()}"] a`
     );
     targetElem.click();
+    targetElem.scrollIntoView();
   }
 
   onMount(() => {

@@ -9,8 +9,8 @@
 
 const posts = [
   {
-    title: "Why was FitNest built?",
-    slug: "why-was-fitnest-built",
+    title: "Why was SpotHall built?",
+    slug: "why-was-spothall-built",
     html: `
 		<p>For fun! Mostly. :D</p>
 			<p><i>(Obviously, this page is still under construction. Check back later!)</i></p>
@@ -24,7 +24,7 @@ const posts = [
 		`
   },
   {
-    title: "How do I contact the creators of FitNest?",
+    title: "How do I contact the creators of SpotHall?",
     slug: "contact",
     html: `
 			<p>For now, you can drop an email to <u><a href="mailto:jin@linjin.me">jin@linjin.me.</a></u></p>

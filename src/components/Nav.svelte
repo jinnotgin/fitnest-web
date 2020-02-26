@@ -16,8 +16,8 @@
 
   @media only screen and (min-width: 600px) {
     .brand-logo img {
-      height: 48px;
-      margin-top: 8px;
+      height: 44px;
+      margin-top: 10px;
     }
   }
 </style>
@@ -25,7 +25,7 @@
 <nav class="teal">
   <div class="nav-wrapper">
     <a class="brand-logo" href="/">
-      <img src="/images/fitnest-logo-white.png" />
+      <img src="/images/spothall-logo-white.png" />
     </a>
     <ul class="right hide-on-med-and-down">
       <li>

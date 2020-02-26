@@ -1,8 +1,8 @@
 {
   "background_color": "#ffffff",
   "theme_color": "#333333",
-  "name": "fitnest",
-  "short_name": "fitnest",
+  "name": "SpotHall",
+  "short_name": "SpotHall",
   "display": "minimal-ui",
   "start_url": "/",
   "icons": [
