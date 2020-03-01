@@ -121,6 +121,22 @@
     /*grid-row-gap: 15px;*/
   }
 
+  .fadeIn {
+    opacity: 1;
+    animation-name: fadeInOpacity;
+    animation-iteration-count: 1;
+    animation-timing-function: ease-in;
+    animation-duration: 0.2s;
+  }
+  @keyframes fadeInOpacity {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
   .noOpacity {
     opacity: 0;
   }
@@ -300,7 +316,7 @@
   }
 </style>
 
-<div class="cardsContainer {$isLoading_home ? 'noOpacity' : ''}">
+<div class="cardsContainer {$isLoading_home ? 'noOpacity' : 'fadeIn'}">
   {#each Object.values(relevant_timeslotsData) as { _id, courts, facility, sport_source_id, date, url }, i (facility._id)}
     <!--
     <div
