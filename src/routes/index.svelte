@@ -38,19 +38,30 @@
     evening: "deep-purple lighten-4"
   };
 
-  let setLoading_timeout;
+  const setLoading_timeouts = {};
   const setLoading = targetState => {
-    clearTimeout(setLoading_timeout);
-
     if ($isLoading_home !== targetState) {
-      setLoading_timeout = setTimeout(
-        () => {
-          isLoading_home.update(item => targetState);
-        },
-        500,
-        $isLoading_home,
-        targetState
-      );
+      if (targetState === true) {
+        isLoading_home.update(item => targetState);
+      } else if (targetState === false) {
+        // simulate some loading time
+
+        if (typeof setLoading_timeouts[targetState] === "undefined")
+          setLoading_timeouts[targetState] = null;
+        let targetState_timeout = setLoading_timeouts[targetState];
+
+        // clear targetState's timeout (in case setLoading of the same targetState has been called repeatedly)
+        clearTimeout(targetState_timeout);
+
+        targetState_timeout = setTimeout(
+          () => {
+            isLoading_home.update(item => targetState);
+          },
+          200,
+          $isLoading_home,
+          targetState
+        );
+      }
     }
   };
 
@@ -177,8 +188,10 @@
     };
 
     if (indexOnly) {
+      setLoading(true);
       index_timeslots_data($timeslots_data, processedData => {
         timeslots_data.update(() => processedData);
+        setLoading(false);
       });
     } else {
       setLoading(true);
