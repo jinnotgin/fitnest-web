@@ -2,6 +2,12 @@
   import { constants } from "./_stores.js";
 </script>
 
+<style>
+  a {
+    color: #039be5;
+  }
+</style>
+
 <svelte:head>
   <title>About</title>
 </svelte:head>
@@ -23,3 +29,23 @@
 </p>
 
 <p>(Obviously, this page is still under construction. Check back soon!)</p>
+
+<p>-</p>
+
+<p>
+  <strong>Peek at the source code on GitHub:</strong>
+</p>
+
+<p>
+  Web Application:
+  <a href="https://github.com/jinnotgin/fitnest-web" target="_blank">
+    https://github.com/jinnotgin/fitnest-web
+  </a>
+</p>
+
+<p>
+  Crawler:
+  <a href="https://github.com/jinnotgin/fitnest-scraper" target="_blank">
+    https://github.com/jinnotgin/fitnest-scraper
+  </a>
+</p>
